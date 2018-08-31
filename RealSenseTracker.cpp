@@ -3,7 +3,8 @@
 
 RealSenseTracker::RealSenseTracker(vrpn_Connection *c /*= 0 */) :
 	vrpn_Tracker("TTFRealSenseTracker0", c),
-	mp_TrackingData(nullptr)
+	mp_TrackingData(nullptr),
+	m_smoothing_constant(0.3) //mid point smoothing effect
 {
 	mp_TrackingData = new TrackingData();
 }
@@ -59,18 +60,28 @@ void RealSenseTracker::mainloop()
 	server_mainloop();
 }
 
-void RealSenseTracker::setTrackingData(TrackingData inData) {
+void RealSenseTracker::setTrackingData(const TrackingData& inData) {
 	if (mp_TrackingData != nullptr)
 	{
-		mp_TrackingData->tx = inData.tx;
-		mp_TrackingData->ty = inData.ty;
-		mp_TrackingData->tz = inData.tz;
+		mp_TrackingData->tx = smoothData(inData.tx, mp_TrackingData->tx);
+		mp_TrackingData->ty = smoothData(inData.ty, mp_TrackingData->ty);
+		mp_TrackingData->tz = smoothData(inData.tz, mp_TrackingData->tz);
 
-		mp_TrackingData->rx = inData.rx;
-		mp_TrackingData->ry = inData.ry;
-		mp_TrackingData->rz = inData.rz;
-		mp_TrackingData->rw = inData.rw;
+		mp_TrackingData->rx = smoothData(inData.rx, mp_TrackingData->rx);
+		mp_TrackingData->ry = smoothData(inData.ry, mp_TrackingData->ry);
+		mp_TrackingData->rz = smoothData(inData.rz, mp_TrackingData->rz);
+		mp_TrackingData->rw = smoothData(inData.rw, mp_TrackingData->rw);
 	}
+}
+
+void RealSenseTracker::setSmoothingConstant(float inSmoothConstant)
+{
+	m_smoothing_constant = inSmoothConstant;
+}
+
+float RealSenseTracker::smoothData(float observed_value, float t_minus_one_value)
+{
+	return m_smoothing_constant * observed_value + (1 - m_smoothing_constant) * t_minus_one_value;
 }
 
 RealSenseTracker::~RealSenseTracker()

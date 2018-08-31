@@ -30,13 +30,16 @@ public:
 	RealSenseTracker(vrpn_Connection *c = 0);
 	virtual ~RealSenseTracker();
 	virtual void mainloop();
-	void setTrackingData(TrackingData inData);
+	void setTrackingData(const TrackingData& inData);
+	void setSmoothingConstant(float inSmoothConstant);
 
 protected:
 	struct timeval _timestamp;
+	float smoothData(float observed_value, float t_minus_one_value);
 
 private:
 	TrackingData* mp_TrackingData;
+	float m_smoothing_constant;
 };
 
 #endif
